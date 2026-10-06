@@ -11,8 +11,8 @@ API to frontend.
 
 | # | Exercise | Topics | Status |
 |---|----------|--------|--------|
-| 01 | [Employee Registry](ex01-employee-registry/) | C# classes, encapsulation, `List<T>`, input validation | Done |
+| 01 | [Employee Registry](ex01-employee-registry/) | C# classes, encapsulation, `List<T>`, input validation, unit tests (xUnit) | Done |
 
 ## Tech stack
 
-C# · .NET 10 · Git
+C# · .NET 10 · xUnit · Git
