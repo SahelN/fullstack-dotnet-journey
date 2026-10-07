@@ -12,6 +12,7 @@ API to frontend.
 | # | Exercise | Topics | Status |
 |---|----------|--------|--------|
 | 01 | [Employee Registry](ex01-employee-registry/) | C# classes, encapsulation, `List<T>`, input validation, unit tests (xUnit) | Done |
+| 02 | [Loops and Strings](ex02-loops-and-strings/) | Menu loop with `switch`, nested `if`, `for`/`while` loops, string manipulation (`Split`, `StringBuilder`), input validation | In progress |
 
 ## Tech stack
 
