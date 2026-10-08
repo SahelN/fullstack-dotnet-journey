@@ -223,7 +223,7 @@ namespace LoopsAndStrings
         /// </summary>
         /// <param name="age">The person's age.</param>
         /// <returns>The price category and the price in SEK.</returns>
-        static (string Category, int Price) GetTicket(int age)
+        internal static (string Category, int Price) GetTicket(int age)
         {
             if (age < ChildFreeAgeLimit || age > SeniorFreeAgeLimit)
             {
@@ -253,7 +253,7 @@ namespace LoopsAndStrings
         /// A comma is added BEFORE each repetition except the first,
         /// so there is no comma after the last one.
         /// </summary>
-        static string BuildRepeatedText(string text, int times)
+        internal static string BuildRepeatedText(string text, int times)
         {
             StringBuilder result = new StringBuilder();
 
@@ -276,7 +276,7 @@ namespace LoopsAndStrings
         /// spaces in a row (extra task 3).
         /// Returns false if the sentence has fewer than three words – the same pattern as int.TryParse.
         /// </summary>
-        static bool TryGetThirdWord(string sentence, out string thirdWord)
+        internal static bool TryGetThirdWord(string sentence, out string thirdWord)
         {
             var words = sentence.Split(' ', StringSplitOptions.RemoveEmptyEntries);
 

@@ -1,3 +1,4 @@
 <Solution>
   <Project Path="src/LoopsAndStrings/LoopsAndStrings.csproj" Id="98ad32ee-e288-4e47-b7d4-1ceeb14b3393" />
+  <Project Path="tests/LoopsAndStrings.Tests/LoopsAndStrings.Tests.csproj" Id="20b48a7f-cc36-4aae-9431-996079ac056d" />
 </Solution>
