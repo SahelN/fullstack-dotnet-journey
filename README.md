@@ -13,6 +13,7 @@ API to frontend.
 |---|----------|--------|--------|
 | 01 | [Employee Registry](ex01-employee-registry/) | C# classes, encapsulation, `List<T>`, input validation, unit tests (xUnit) | Done |
 | 02 | [Loops and Strings](ex02-loops-and-strings/) | Menu loop with `switch`, nested `if`, `for`/`while` loops, string manipulation (`Split`, `StringBuilder`), input validation, unit tests (xUnit) | Done |
+| 03 | [Exceptions](ex03-exceptions/) | `try`/`catch`/`finally`, catch order, rethrow with `throw;`, `using` for resources, integer vs. floating-point division, menu to trigger each exception type | Done |
 
 ## Tech stack
 
