@@ -480,7 +480,3 @@ $RECYCLE.BIN/
 
 # Vim temporary swap files
 *.swp
-
-# Course material and reference solutions (not part of my code)
-*.pdf
-_facit/
