@@ -121,6 +121,16 @@
                 // Specifikt fel om nolldivision
                 Console.WriteLine("Kan inte dividera med noll: filen innehåller 0.");
             }
+            catch (InvalidOperationException ex)
+            {
+                // Val 5: empty.txt är tom, ReadLine() returnerar null
+                Console.WriteLine($"Tom fil: {ex.Message}");
+            }
+            catch (ArgumentException)
+            {
+                // Val 6: tomt filnamn stoppas av kontrollen i början av ProcessFile
+                Console.WriteLine("Ogiltigt filnamn: filnamnet får inte vara tomt.");
+            }
             catch (Exception ex)
             {
                 // Fallback för alla övriga obekanta fel
