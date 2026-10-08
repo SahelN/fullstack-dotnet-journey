@@ -21,10 +21,10 @@
                     // Specifikt fel om filen inte finns
                     Console.WriteLine($"Filen hittades inte: {ex.Message}");
                 }
-                catch (FormatException ex)
+                catch (FormatException)
                 {
                     // Specifikt fel om texten inte kan tolkas som tal
-                    Console.WriteLine($"Formatfel: {ex.Message}");
+                    Console.WriteLine("Formatfel: Filen innehåller inte ett giltigt heltal.");
                 }
                 catch (DivideByZeroException ex)
                 {
@@ -55,13 +55,12 @@
                 }
 
                 StreamReader? reader = null;
+                string? line = null;
                 try
                 {
                     reader = new StreamReader(fileName);
 
-                    string? line = reader.ReadLine();
-                    if (line == null)
-                        throw new InvalidOperationException("Filen är tom.");
+                    line = reader.ReadLine() ?? throw new InvalidOperationException("Filen är tom.");
 
                     // Försöker omvandla text till tal
                     int number = int.Parse(line); // Kan ge FormatException
@@ -69,21 +68,14 @@
                     // Division: kan ge DivideByZeroException
                     return 100.0 / number;
                 }
-                catch (FormatException ex)
+                catch (FormatException)
                 {
                     // Vi kan logga eller omformulera felet
-                    Console.WriteLine($"Formatfel i ProcessFile: {ex.Message}");
+                    Console.WriteLine($"[LOG] Formatfel i ProcessFile. Fil: {Path.GetFileName(fileName)}, innehåll: \"{line}\"");
                     // Vi kan välja att låta metoden "kasta upp" felet
                     throw; // När du i `catch` bara vill logga/analysera,
                            // men låta anroparen (t.ex. en högre nivå i applikationen)
                            // bestämma hur man ska återhämta sig. 
-                }
-                catch (Exception ex)
-                {
-                    // Om vi vill ge en mer meningsfull feltyp till anroparen
-                    throw new InvalidOperationException(
-                    "Det gick inte att processa filen.",
-                    ex); // InnerException = ursprunglig fel
                 }
                 finally
                 {
