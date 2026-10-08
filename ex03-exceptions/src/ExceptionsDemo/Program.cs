@@ -63,7 +63,6 @@
             return Path.Combine(AppContext.BaseDirectory, "TestData", fileName);
         }
 
-        // Exempel på metod som själv kastar ett undantag (throw)
         static int ProcessFile(string fileName)
         {
             // Om filnamnet är tomt: logiskt fel vi vill signalera
@@ -88,9 +87,7 @@
             }
             catch (FormatException)
             {
-                // Vi kan logga eller omformulera felet
                 Console.WriteLine($"[LOG] Formatfel i ProcessFile. Fil: {Path.GetFileName(fileName)}, innehåll: \"{line}\"");
-                // Vi kan välja att låta metoden "kasta upp" felet
                 throw; // När du i `catch` bara vill logga/analysera,
                        // men låta anroparen (t.ex. en högre nivå i applikationen)
                        // bestämma hur man ska återhämta sig. 
@@ -108,17 +105,17 @@
             }
             catch (FileNotFoundException ex)
             {
-                // Specifikt fel om filen inte finns
+                // Val 2: missing.txt finns inte
                 Console.WriteLine($"Filen hittades inte: {Path.GetFileName(ex.FileName)}");
             }
             catch (FormatException)
             {
-                // Specifikt fel om texten inte kan tolkas som tal
+                // Val 3: text.txt innehåller "abc"
                 Console.WriteLine("Formatfel: Filen innehåller inte ett giltigt heltal.");
             }
             catch (DivideByZeroException)
             {
-                // Specifikt fel om nolldivision
+                // Val 4: zero.txt ger 100 / 0
                 Console.WriteLine("Kan inte dividera med noll: filen innehåller 0.");
             }
             catch (InvalidOperationException ex)
@@ -133,7 +130,7 @@
             }
             catch (Exception ex)
             {
-                // Fallback för alla övriga obekanta fel
+                // Val 7: overflow.txt (OverflowException) och andra oväntade fel
                 Console.WriteLine($"Okänt fel: {ex.Message}");
             }
             finally
