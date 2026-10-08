@@ -6,42 +6,61 @@
         {
             Console.WriteLine("=== Start av programmet ===");
 
-            // Exempel 1: try-catch-finally
-            try
+            bool running = true;
+            while (running)
             {
-                Console.WriteLine("Försöker läsa fil och räkna...");
-                var path = Path.Combine(AppContext.BaseDirectory, "numbers.txt");
-                var result = ProcessFile(path);
+                Console.WriteLine();
+                Console.WriteLine("Välj ett scenario:");
+                Console.WriteLine("1. Giltig fil (valid.txt)");
+                Console.WriteLine("2. Filen saknas (missing.txt)");
+                Console.WriteLine("3. Text i stället för tal (text.txt)");
+                Console.WriteLine("4. Division med noll (zero.txt)");
+                Console.WriteLine("5. Tom fil (empty.txt)");
+                Console.WriteLine("6. Tomt filnamn");
+                Console.WriteLine("7. För stort tal (overflow.txt)");
+                Console.WriteLine("0. Avsluta");
+                Console.Write("Ditt val: ");
 
-                Console.WriteLine($"\nResultat: {result}");
-            }
-            catch (FileNotFoundException ex)
-            {
-                // Specifikt fel om filen inte finns
-                Console.WriteLine($"Filen hittades inte: {ex.Message}");
-            }
-            catch (FormatException)
-            {
-                // Specifikt fel om texten inte kan tolkas som tal
-                Console.WriteLine("Formatfel: Filen innehåller inte ett giltigt heltal.");
-            }
-            catch (DivideByZeroException ex)
-            {
-                // Specifikt fel om nolldivision
-                Console.WriteLine($"Kan inte dividera med noll: {ex.Message}");
-            }
-            catch (Exception ex)
-            {
-                // Fallback för alla övriga obekanta fel
-                Console.WriteLine($"Okänt fel: {ex.Message}");
-            }
-            finally
-            {
-                // Körs ALLTID, även om det blev undantag
-                Console.WriteLine("Cleanup: Logging avslutat anrop.");
+                string? choice = Console.ReadLine();
+
+                switch (choice)
+                {
+                    case "1":
+                        RunScenario(GetTestFilePath("valid.txt"));
+                        break;
+                    case "2":
+                        RunScenario(GetTestFilePath("missing.txt"));
+                        break;
+                    case "3":
+                        RunScenario(GetTestFilePath("text.txt"));
+                        break;
+                    case "4":
+                        RunScenario(GetTestFilePath("zero.txt"));
+                        break;
+                    case "5":
+                        RunScenario(GetTestFilePath("empty.txt"));
+                        break;
+                    case "6":
+                        RunScenario(""); // Ingen Path.Combine, då blir det inte tomt
+                        break;
+                    case "7":
+                        RunScenario(GetTestFilePath("overflow.txt"));
+                        break;
+                    case "0":
+                        running = false;
+                        break;
+                    default:
+                        Console.WriteLine("Ogiltigt val, försök igen.");
+                        break;
+                }
             }
 
             Console.WriteLine("Programmet avslutas normalt.");
+        }
+
+        static string GetTestFilePath(string fileName)
+        {
+            return Path.Combine(AppContext.BaseDirectory, "TestData", fileName);
         }
 
         // Exempel på metod som själv kastar ett undantag (throw)
@@ -75,6 +94,42 @@
                 throw; // När du i `catch` bara vill logga/analysera,
                        // men låta anroparen (t.ex. en högre nivå i applikationen)
                        // bestämma hur man ska återhämta sig. 
+            }
+        }
+
+        static void RunScenario(string fileName)
+        {
+            try
+            {
+                Console.WriteLine("Försöker läsa fil och räkna...");
+                var result = ProcessFile(fileName);
+
+                Console.WriteLine($"\nResultat: {result}");
+            }
+            catch (FileNotFoundException ex)
+            {
+                // Specifikt fel om filen inte finns
+                Console.WriteLine($"Filen hittades inte: {Path.GetFileName(ex.FileName)}");
+            }
+            catch (FormatException)
+            {
+                // Specifikt fel om texten inte kan tolkas som tal
+                Console.WriteLine("Formatfel: Filen innehåller inte ett giltigt heltal.");
+            }
+            catch (DivideByZeroException)
+            {
+                // Specifikt fel om nolldivision
+                Console.WriteLine("Kan inte dividera med noll: filen innehåller 0.");
+            }
+            catch (Exception ex)
+            {
+                // Fallback för alla övriga obekanta fel
+                Console.WriteLine($"Okänt fel: {ex.Message}");
+            }
+            finally
+            {
+                // Körs ALLTID, även om det blev undantag
+                Console.WriteLine("Cleanup: Logging avslutat anrop.");
             }
         }
     }
