@@ -4,85 +4,84 @@
     {
         static void Main(string[] args)
         {
+            Console.WriteLine("=== Start av programmet ===");
+
+            // Exempel 1: try-catch-finally
+            try
             {
-                Console.WriteLine("=== Start av programmet ===");
+                Console.WriteLine("Försöker läsa fil och räkna...");
+                var path = Path.Combine(AppContext.BaseDirectory, "numbers.txt");
+                var result = ProcessFile(path);
 
-                // Exempel 1: try-catch-finally
-                try
-                {
-                    Console.WriteLine("Försöker läsa fil och räkna...");
-                    var path = Path.Combine(AppContext.BaseDirectory, "numbers.txt");
-                    var result = ProcessFile(path);
-                  
-                    Console.WriteLine($"\nResultat: {result}");
-                }
-                catch (FileNotFoundException ex)
-                {
-                    // Specifikt fel om filen inte finns
-                    Console.WriteLine($"Filen hittades inte: {ex.Message}");
-                }
-                catch (FormatException)
-                {
-                    // Specifikt fel om texten inte kan tolkas som tal
-                    Console.WriteLine("Formatfel: Filen innehåller inte ett giltigt heltal.");
-                }
-                catch (DivideByZeroException ex)
-                {
-                    // Specifikt fel om nolldivision
-                    Console.WriteLine($"Kan inte dividera med noll: {ex.Message}");
-                }
-                catch (Exception ex)
-                {
-                    // Fallback för alla övriga obekanta fel
-                    Console.WriteLine($"Okänt fel: {ex.Message}");
-                }
-                finally
-                {
-                    // Körs ALLTID, även om det blev undantag
-                    Console.WriteLine("Cleanup: Logging avslutat anrop.");
-                }
-
-                Console.WriteLine("Programmet avslutas normalt.");
+                Console.WriteLine($"\nResultat: {result}");
+            }
+            catch (FileNotFoundException ex)
+            {
+                // Specifikt fel om filen inte finns
+                Console.WriteLine($"Filen hittades inte: {ex.Message}");
+            }
+            catch (FormatException)
+            {
+                // Specifikt fel om texten inte kan tolkas som tal
+                Console.WriteLine("Formatfel: Filen innehåller inte ett giltigt heltal.");
+            }
+            catch (DivideByZeroException ex)
+            {
+                // Specifikt fel om nolldivision
+                Console.WriteLine($"Kan inte dividera med noll: {ex.Message}");
+            }
+            catch (Exception ex)
+            {
+                // Fallback för alla övriga obekanta fel
+                Console.WriteLine($"Okänt fel: {ex.Message}");
+            }
+            finally
+            {
+                // Körs ALLTID, även om det blev undantag
+                Console.WriteLine("Cleanup: Logging avslutat anrop.");
             }
 
-            // Exempel på metod som själv kastar ett undantag (throw)
-            static int ProcessFile(string fileName)
+            Console.WriteLine("Programmet avslutas normalt.");
+        }
+
+        // Exempel på metod som själv kastar ett undantag (throw)
+        static int ProcessFile(string fileName)
+        {
+            // Om filnamnet är tomt: logiskt fel vi vill signalera
+            if (string.IsNullOrWhiteSpace(fileName))
             {
-                // Om filnamnet är tomt: logiskt fel vi vill signalera
-                if (string.IsNullOrWhiteSpace(fileName))
-                {
-                    throw new ArgumentException("Filnamn får inte vara tomt eller null.", nameof(fileName));
-                }
+                throw new ArgumentException("Filnamn får inte vara tomt eller null.", nameof(fileName));
+            }
 
-                StreamReader? reader = null;
-                string? line = null;
-                try
-                {
-                    reader = new StreamReader(fileName);
+            StreamReader? reader = null;
+            string? line = null;
+            try
+            {
+                reader = new StreamReader(fileName);
 
-                    line = reader.ReadLine() ?? throw new InvalidOperationException("Filen är tom.");
+                line = reader.ReadLine() ?? throw new InvalidOperationException("Filen är tom.");
 
-                    // Försöker omvandla text till tal
-                    int number = int.Parse(line); // Kan ge FormatException
+                // Försöker omvandla text till tal
+                int number = int.Parse(line); // Kan ge FormatException
 
-                    // Division: kan ge DivideByZeroException
-                    return 100 / number;
-                }
-                catch (FormatException)
-                {
-                    // Vi kan logga eller omformulera felet
-                    Console.WriteLine($"[LOG] Formatfel i ProcessFile. Fil: {Path.GetFileName(fileName)}, innehåll: \"{line}\"");
-                    // Vi kan välja att låta metoden "kasta upp" felet
-                    throw; // När du i `catch` bara vill logga/analysera,
-                           // men låta anroparen (t.ex. en högre nivå i applikationen)
-                           // bestämma hur man ska återhämta sig. 
-                }
-                finally
-                {
-                    // Garanterad stängning av resurs
-                    reader?.Close();
-                    Console.WriteLine("finally i ProcessFile: StreamReader stängd.");
-                }
+                // Heltalsdivision: kastar DivideByZeroException om number är 0
+                // (med double, t.ex. 100.0 / 0, blir resultatet ∞ i stället för ett undantag)
+                return 100 / number;
+            }
+            catch (FormatException)
+            {
+                // Vi kan logga eller omformulera felet
+                Console.WriteLine($"[LOG] Formatfel i ProcessFile. Fil: {Path.GetFileName(fileName)}, innehåll: \"{line}\"");
+                // Vi kan välja att låta metoden "kasta upp" felet
+                throw; // När du i `catch` bara vill logga/analysera,
+                       // men låta anroparen (t.ex. en högre nivå i applikationen)
+                       // bestämma hur man ska återhämta sig. 
+            }
+            finally
+            {
+                // Garanterad stängning av resurs
+                reader?.Close();
+                Console.WriteLine("finally i ProcessFile: StreamReader stängd.");
             }
         }
     }
