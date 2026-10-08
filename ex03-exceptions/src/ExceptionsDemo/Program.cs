@@ -46,7 +46,7 @@
             }
 
             // Exempel på metod som själv kastar ett undantag (throw)
-            static double ProcessFile(string fileName)
+            static int ProcessFile(string fileName)
             {
                 // Om filnamnet är tomt: logiskt fel vi vill signalera
                 if (string.IsNullOrWhiteSpace(fileName))
@@ -66,7 +66,7 @@
                     int number = int.Parse(line); // Kan ge FormatException
 
                     // Division: kan ge DivideByZeroException
-                    return 100.0 / number;
+                    return 100 / number;
                 }
                 catch (FormatException)
                 {
