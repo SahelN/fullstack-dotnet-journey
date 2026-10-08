@@ -53,11 +53,10 @@
                 throw new ArgumentException("Filnamn får inte vara tomt eller null.", nameof(fileName));
             }
 
-            StreamReader? reader = null;
             string? line = null;
             try
             {
-                reader = new StreamReader(fileName);
+                using StreamReader reader = new StreamReader(fileName);
 
                 line = reader.ReadLine() ?? throw new InvalidOperationException("Filen är tom.");
 
@@ -76,12 +75,6 @@
                 throw; // När du i `catch` bara vill logga/analysera,
                        // men låta anroparen (t.ex. en högre nivå i applikationen)
                        // bestämma hur man ska återhämta sig. 
-            }
-            finally
-            {
-                // Garanterad stängning av resurs
-                reader?.Close();
-                Console.WriteLine("finally i ProcessFile: StreamReader stängd.");
             }
         }
     }
