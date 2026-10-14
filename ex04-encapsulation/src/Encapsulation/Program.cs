@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
+using System.Globalization;
 
 namespace Encapsulation
 {
@@ -8,20 +8,33 @@ namespace Encapsulation
     {
         public static void Main()
         {
-            var lines = 5;
+            // ! = null-forgiving operator: tells the compiler ReadLine() won't return null here (removes warning CS8604)
+            int lines = int.Parse(Console.ReadLine()!);
+
             var persons = new List<Person>();
             for (int i = 0; i < lines; i++)
             {
                 // TODO: validate input – assumes correct input for now
                 // ! = trust ReadLine() is not null (removes warning CS8602)
                 var cmdArgs = Console.ReadLine()!.Split();
-                var person = new Person(cmdArgs[0], cmdArgs[1], int.Parse(cmdArgs[2]));
+
+                // InvariantCulture = "." is always the decimal separator, regardless of Windows language
+                var person = new Person(
+                    cmdArgs[0],
+                    cmdArgs[1],
+                    int.Parse(cmdArgs[2]),
+                    decimal.Parse(cmdArgs[3], CultureInfo.InvariantCulture));
+
                 persons.Add(person);
             }
-            persons.OrderBy(p => p.FirstName)
-                   .ThenBy(p => p.Age)
-                   .ToList()
-                   .ForEach(p => Console.WriteLine(p.ToString()));
+
+            decimal bonus = decimal.Parse(Console.ReadLine()!, CultureInfo.InvariantCulture);
+
+            foreach (Person person in persons)
+            {
+                person.IncreaseSalary(bonus);
+                Console.WriteLine(person);
+            }
         }
     }
 }

@@ -1,4 +1,4 @@
-﻿using System;
+﻿using System.Globalization;
 
 namespace Encapsulation
 {
@@ -8,16 +8,18 @@ namespace Encapsulation
         private string _firstName = string.Empty;
         private string _lastName = string.Empty;
         private int _age;
+        private decimal _salary;
 
         // constructor goes through the properties
-        public Person(string firstName, string lastName, int age)
+        public Person(string firstName, string lastName, int age, decimal salary)
         {
             FirstName = firstName;
             LastName = lastName;
             Age = age;
+            Salary = salary;
         }
 
-        // public get (Program can read and sort), private set (only Person can change)
+        // public get (Program can read), private set (only Person can change)
         public string FirstName
         {
             get { return _firstName; }
@@ -36,10 +38,24 @@ namespace Encapsulation
             private set { _age = value; }
         }
 
-        // how a Person is shown as text
+        public decimal Salary
+        {
+            get { return _salary; }
+            private set { _salary = value; }
+        }
+
+        // the only way to change salary from outside – the rule lives inside Person
+        public void IncreaseSalary(decimal percentage)
+        {
+            // under 30 gets half the increase
+            decimal actualPercentage = Age < 30 ? percentage / 2 : percentage;
+            Salary += Salary * actualPercentage / 100;
+        }
+
+        // InvariantCulture -> "2640.00" (not "2640,00" on a Swedish computer)
         public override string ToString()
         {
-            return $"{FirstName} {LastName} is {Age} years old.";
+            return $"{FirstName} {LastName} receives {Salary.ToString("F2", CultureInfo.InvariantCulture)} dollars.";
         }
     }
 }
