@@ -8,27 +8,54 @@ namespace Encapsulation
     {
         public static void Main()
         {
-            // ! = null-forgiving operator: tells the compiler ReadLine() won't return null here (removes warning CS8604)
-            int lines = int.Parse(Console.ReadLine()!);
+            // ?? "" = if ReadLine() returns null, use an empty string instead (no crash, no warning)
+            if (!int.TryParse(Console.ReadLine() ?? "", out int lines) || lines < 0)
+            {
+                Console.WriteLine("Invalid number of persons.");
+                return;
+            }
 
             var persons = new List<Person>();
             for (int i = 0; i < lines; i++)
             {
-                // TODO: validate input – assumes correct input for now
-                // ! = trust ReadLine() is not null (removes warning CS8602)
-                var cmdArgs = Console.ReadLine()!.Split();
+                // input validation lives in Program: format and types
+                var cmdArgs = (Console.ReadLine() ?? "").Split(' ', StringSplitOptions.RemoveEmptyEntries);
+
+                if (cmdArgs.Length != 4)
+                {
+                    Console.WriteLine("Invalid input. Expected: firstName lastName age salary");
+                    continue;
+                }
+
+                if (!int.TryParse(cmdArgs[2], out int age))
+                {
+                    Console.WriteLine($"Invalid age: {cmdArgs[2]}");
+                    continue;
+                }
 
                 // InvariantCulture = "." is always the decimal separator, regardless of Windows language
-                var person = new Person(
-                    cmdArgs[0],
-                    cmdArgs[1],
-                    int.Parse(cmdArgs[2]),
-                    decimal.Parse(cmdArgs[3], CultureInfo.InvariantCulture));
+                if (!decimal.TryParse(cmdArgs[3], NumberStyles.Number, CultureInfo.InvariantCulture, out decimal salary))
+                {
+                    Console.WriteLine($"Invalid salary: {cmdArgs[3]}");
+                    continue;
+                }
 
-                persons.Add(person);
+                // data validation lives in Person: the setters throw ArgumentException
+                try
+                {
+                    persons.Add(new Person(cmdArgs[0], cmdArgs[1], age, salary));
+                }
+                catch (ArgumentException ex)
+                {
+                    Console.WriteLine(ex.Message);
+                }
             }
 
-            decimal bonus = decimal.Parse(Console.ReadLine()!, CultureInfo.InvariantCulture);
+            if (!decimal.TryParse(Console.ReadLine() ?? "", NumberStyles.Number, CultureInfo.InvariantCulture, out decimal bonus) || bonus < 0)
+            {
+                Console.WriteLine("Invalid bonus.");
+                return;
+            }
 
             foreach (Person person in persons)
             {

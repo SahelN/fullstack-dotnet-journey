@@ -1,4 +1,5 @@
-﻿using System.Globalization;
+﻿using System;
+using System.Globalization;
 
 namespace Encapsulation
 {
@@ -10,7 +11,7 @@ namespace Encapsulation
         private int _age;
         private decimal _salary;
 
-        // constructor goes through the properties
+        // constructor goes through the properties -> validation runs here too
         public Person(string firstName, string lastName, int age, decimal salary)
         {
             FirstName = firstName;
@@ -19,29 +20,49 @@ namespace Encapsulation
             Salary = salary;
         }
 
-        // public get (Program can read), private set (only Person can change)
+        // public get (Program can read), private set (only Person can change) + validation
         public string FirstName
         {
             get { return _firstName; }
-            private set { _firstName = value; }
+            private set
+            {
+                if (value == null || value.Length < 3)
+                    throw new ArgumentException("First name cannot contain fewer than 3 symbols!");
+                _firstName = value;
+            }
         }
 
         public string LastName
         {
             get { return _lastName; }
-            private set { _lastName = value; }
+            private set
+            {
+                if (value == null || value.Length < 3)
+                    throw new ArgumentException("Last name cannot contain fewer than 3 symbols!");
+                _lastName = value;
+            }
         }
 
         public int Age
         {
             get { return _age; }
-            private set { _age = value; }
+            private set
+            {
+                if (value <= 0)
+                    throw new ArgumentException("Age cannot be zero or a negative integer!");
+                _age = value;
+            }
         }
 
         public decimal Salary
         {
             get { return _salary; }
-            private set { _salary = value; }
+            private set
+            {
+                if (value < 460)
+                    throw new ArgumentException("Salary cannot be less than 460 dollar!");
+                _salary = value;
+            }
         }
 
         // the only way to change salary from outside – the rule lives inside Person
