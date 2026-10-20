@@ -1,0 +1,214 @@
+﻿using GarageApp.Vehicles;
+using System;
+
+namespace GarageApp
+{
+    public class Garage
+    {
+        private readonly Vehicle?[] _vehicles;
+
+        public int Capacity
+        {
+            get { return _vehicles.Length; }
+        }
+
+        public int ParkedVehicleCount
+        {
+            get
+            {
+                int count = 0;
+                for (int i = 0; i < _vehicles.Length; i++)
+                {
+                    if (_vehicles[i] != null)
+                        count++;
+                }
+                return count;
+            }
+        }
+
+        public int FreeSpaces
+        {
+            get { return Capacity - ParkedVehicleCount; }
+        }
+
+        public bool IsFull
+        {
+            get { return ParkedVehicleCount == Capacity; }
+        }
+
+        public Garage(int capacity)
+        {
+            if (capacity < 1)
+                throw new ArgumentOutOfRangeException(nameof(capacity), "Capacity must be greater than zero.");
+
+            _vehicles = new Vehicle?[capacity];
+        }
+
+        public ParkResult Park(Vehicle vehicle)
+        {
+            ArgumentNullException.ThrowIfNull(vehicle);
+
+            int freeIndex = -1;
+
+            for (int i = 0; i < _vehicles.Length; i++)
+            {
+                Vehicle? current = _vehicles[i];
+
+                if (current == null)
+                {
+                    // Remember the first free space, but keep looking for duplicates
+                    if (freeIndex == -1)
+                        freeIndex = i;
+                }
+                else if (current.RegistrationNumber == vehicle.RegistrationNumber)
+                {
+                    return ParkResult.DuplicateRegistrationNumber;
+                }
+            }
+
+            if (freeIndex == -1)
+                return ParkResult.GarageFull;
+
+            _vehicles[freeIndex] = vehicle;
+            return ParkResult.Success;
+        }
+
+        public bool Remove(string registrationNumber)
+        {
+            string normalizedNumber = NormalizeRegistrationNumber(registrationNumber);
+
+            for (int i = 0; i < _vehicles.Length; i++)
+            {
+                Vehicle? current = _vehicles[i];
+
+                if (current != null && current.RegistrationNumber == normalizedNumber)
+                {
+                    _vehicles[i] = null;
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        public Vehicle? FindByRegistrationNumber(string registrationNumber)
+        {
+            string normalizedNumber = NormalizeRegistrationNumber(registrationNumber);
+
+            for (int i = 0; i < _vehicles.Length; i++)
+            {
+                Vehicle? current = _vehicles[i];
+
+                if (current != null && current.RegistrationNumber == normalizedNumber)
+                    return current;
+            }
+            return null;
+        }
+
+        public Vehicle[] GetAllVehicles()
+        {
+            Vehicle[] temp = new Vehicle[_vehicles.Length];
+            int count = 0;
+
+            for (int i = 0; i < _vehicles.Length; i++)
+            {
+                Vehicle? current = _vehicles[i];
+                if (current != null)
+                {
+                    temp[count] = current;
+                    count++;
+                }
+            }
+
+            return temp[..count];
+        }
+
+        public VehicleTypeCount[] GetVehicleTypeCounts()
+        {
+            // There can never be more different types than parking spaces
+            string[] typeNames = new string[_vehicles.Length];
+            int[] counts = new int[_vehicles.Length];
+            int numberOfTypes = 0;
+
+            for (int i = 0; i < _vehicles.Length; i++)
+            {
+                Vehicle? current = _vehicles[i];
+                if (current == null)
+                    continue;
+
+                string typeName = current.GetType().Name;
+
+                int typeIndex = -1;
+                for (int t = 0; t < numberOfTypes; t++)
+                {
+                    if (typeNames[t] == typeName)
+                    {
+                        typeIndex = t;
+                        break;
+                    }
+                }
+
+                if (typeIndex == -1)
+                {
+                    typeNames[numberOfTypes] = typeName;
+                    counts[numberOfTypes] = 1;
+                    numberOfTypes++;
+                }
+                else
+                {
+                    counts[typeIndex]++;
+                }
+            }
+
+            VehicleTypeCount[] result = new VehicleTypeCount[numberOfTypes];
+            for (int t = 0; t < numberOfTypes; t++)
+            {
+                result[t] = new VehicleTypeCount(typeNames[t], counts[t]);
+            }
+            return result;
+        }
+
+        // null means "ignore this property"
+        public Vehicle[] Search(string? vehicleType, string? color, int? numberOfWheels)
+        {
+            Vehicle[] temp = new Vehicle[_vehicles.Length];
+            int count = 0;
+
+            for (int i = 0; i < _vehicles.Length; i++)
+            {
+                Vehicle? current = _vehicles[i];
+                if (current != null && Matches(current, vehicleType, color, numberOfWheels))
+                {
+                    temp[count] = current;
+                    count++;
+                }
+            }
+
+            return temp[..count];
+        }
+
+        private static bool Matches(Vehicle vehicle, string? vehicleType, string? color, int? numberOfWheels)
+        {
+            if (!string.IsNullOrWhiteSpace(vehicleType) &&
+                !string.Equals(vehicle.GetType().Name, vehicleType.Trim(), StringComparison.OrdinalIgnoreCase))
+                return false;
+
+            if (!string.IsNullOrWhiteSpace(color) &&
+                !string.Equals(vehicle.Color, color.Trim(), StringComparison.OrdinalIgnoreCase))
+                return false;
+
+            if (numberOfWheels.HasValue && vehicle.NumberOfWheels != numberOfWheels.Value)
+                return false;
+
+            return true;
+        }
+
+        private static string NormalizeRegistrationNumber(string registrationNumber)
+        {
+            if (string.IsNullOrWhiteSpace(registrationNumber))
+                return string.Empty;
+
+            // Remove spaces and make uppercase so " abc123 " matches ABC123
+            return registrationNumber.Trim().ToUpperInvariant();
+        }
+    }
+}

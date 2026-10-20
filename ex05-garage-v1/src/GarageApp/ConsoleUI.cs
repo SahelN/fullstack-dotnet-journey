@@ -1,0 +1,381 @@
+﻿using GarageApp.Vehicles;
+using System;
+
+namespace GarageApp
+{
+    public static class ConsoleUI
+    {
+        public static void Run()
+        {
+            Console.WriteLine("=== Garage App ===");
+            Console.WriteLine();
+
+            int capacity = ReadInt("Number of parking spaces (1-1000): ", 1, 1000);
+            Garage garage = new Garage(capacity);
+            Console.WriteLine($"A garage with {garage.Capacity} parking spaces was created.");
+
+            Console.WriteLine("You can start with 6 ready-made test vehicles (you don't need to type anything).");
+            if (ReadYesNo("Do you want me to add them? (y/n): "))
+            {
+                AddSampleVehicles(garage);
+            }
+
+            bool running = true;
+            while (running)
+            {
+                PrintMenu(garage);
+                int choice = ReadInt("Choose an option: ", 0, 6);
+                Console.WriteLine();
+
+                switch (choice)
+                {
+                    case 1:
+                        ListAllVehicles(garage);
+                        break;
+                    case 2:
+                        ListVehicleTypes(garage);
+                        break;
+                    case 3:
+                        ParkVehicle(garage);
+                        break;
+                    case 4:
+                        RemoveVehicle(garage);
+                        break;
+                    case 5:
+                        FindVehicle(garage);
+                        break;
+                    case 6:
+                        SearchVehicles(garage);
+                        break;
+                    case 0:
+                        running = false;
+                        break;
+                }
+
+                if (running)
+                {
+                    Console.WriteLine();
+                    Console.Write("Press Enter to continue...");
+                    Console.ReadLine();
+                }
+            }
+
+            Console.WriteLine("Goodbye!");
+        }
+
+
+        // ---------- Menu ----------
+        private static void PrintMenu(Garage garage)
+        {
+            Console.WriteLine();
+            Console.WriteLine("========================================");
+            Console.WriteLine($" GARAGE  ({garage.FreeSpaces} of {garage.Capacity} spaces free)");
+            Console.WriteLine("========================================");
+            Console.WriteLine(" 1. List all parked vehicles");
+            Console.WriteLine(" 2. List vehicle types and counts");
+            Console.WriteLine(" 3. Park a vehicle");
+            Console.WriteLine(" 4. Remove a vehicle");
+            Console.WriteLine(" 5. Find a vehicle by registration number");
+            Console.WriteLine(" 6. Filter vehicles by type, color or wheels");
+            Console.WriteLine(" 0. Exit");
+            Console.WriteLine("----------------------------------------");
+        }
+
+        // ---------- Menu actions ----------
+        private static void ListAllVehicles(Garage garage)
+        {
+            Console.WriteLine("Parked vehicles:");
+            PrintVehicles(garage.GetAllVehicles());
+        }
+
+        private static void ListVehicleTypes(Garage garage)
+        {
+            VehicleTypeCount[] typeCounts = garage.GetVehicleTypeCounts();
+
+            if (typeCounts.Length == 0)
+            {
+                Console.WriteLine("The garage is empty.");
+                return;
+            }
+
+            Console.WriteLine("Vehicle types in the garage:");
+            foreach (VehicleTypeCount typeCount in typeCounts)
+            {
+                Console.WriteLine($"  {typeCount.TypeName,-11} {typeCount.Count}");
+            }
+        }
+
+        private static void ParkVehicle(Garage garage)
+        {
+            // Check early so the user doesn't type everything for nothing
+            if (garage.IsFull)
+            {
+                Console.WriteLine("The garage is full. Remove a vehicle first.");
+                return;
+            }
+
+            Console.WriteLine("Vehicle types: 1. Car  2. Motorcycle  3. Bus  4. Boat  5. Airplane");
+            int vehicleType = ReadInt("Choose vehicle type: ", 1, 5);
+
+            string registrationNumber = ReadRequiredString("Registration number: ");
+
+            if (garage.FindByRegistrationNumber(registrationNumber) != null)
+            {
+                Console.WriteLine($"A vehicle with registration number {registrationNumber.ToUpperInvariant()} is already parked.");
+                return;
+            }
+
+            string color = ReadRequiredString("Color: ");
+
+            Vehicle vehicle;
+            try
+            {
+                switch (vehicleType)
+                {
+                    case 1:
+                        int carWheels = ReadInt("Number of wheels (0-20): ", 0, 20);
+                        FuelType fuelType = ReadFuelType();
+                        vehicle = new Car(registrationNumber, color, carWheels, fuelType);
+                        break;
+                    case 2:
+                        int motorcycleWheels = ReadInt("Number of wheels (0-20): ", 0, 20);
+                        int cylinderVolume = ReadInt("Cylinder volume in cc (1-10000): ", 1, 10000);
+                        vehicle = new Motorcycle(registrationNumber, color, motorcycleWheels, cylinderVolume);
+                        break;
+                    case 3:
+                        int busWheels = ReadInt("Number of wheels (0-20): ", 0, 20);
+                        int numberOfSeats = ReadInt("Number of seats (1-200): ", 1, 200);
+                        vehicle = new Bus(registrationNumber, color, busWheels, numberOfSeats);
+                        break;
+                    case 4:
+                        double length = ReadPositiveDouble("Length in meters: ");
+                        vehicle = new Boat(registrationNumber, color, length);
+                        break;
+                    default:
+                        int airplaneWheels = ReadInt("Number of wheels (0-20): ", 0, 20);
+                        int numberOfEngines = ReadInt("Number of engines (1-10): ", 1, 10);
+                        vehicle = new Airplane(registrationNumber, color, airplaneWheels, numberOfEngines);
+                        break;
+                }
+            }
+            catch (ArgumentException ex)
+            {
+                // Safety net: the Vehicle constructors validate their input
+                Console.WriteLine($"Could not create the vehicle: {ex.Message}");
+                return;
+            }
+
+            ParkResult result = garage.Park(vehicle);
+            PrintParkResult(result, vehicle);
+        }
+
+        private static void RemoveVehicle(Garage garage)
+        {
+            string registrationNumber = ReadRequiredString("Registration number of the vehicle to remove: ");
+
+            if (garage.Remove(registrationNumber))
+            {
+                Console.WriteLine($"{registrationNumber.ToUpperInvariant()} was removed from the garage.");
+            }
+            else
+            {
+                Console.WriteLine($"No vehicle with registration number {registrationNumber.ToUpperInvariant()} was found.");
+            }
+        }
+
+        private static void FindVehicle(Garage garage)
+        {
+            string registrationNumber = ReadRequiredString("Registration number: ");
+            Vehicle? vehicle = garage.FindByRegistrationNumber(registrationNumber);
+
+            if (vehicle == null)
+            {
+                Console.WriteLine($"No vehicle with registration number {registrationNumber.ToUpperInvariant()} was found.");
+            }
+            else
+            {
+                Console.WriteLine("Vehicle found:");
+                Console.WriteLine($"  {vehicle}");
+            }
+        }
+
+        private static void SearchVehicles(Garage garage)
+        {
+            Console.WriteLine("Filter vehicles. Leave a field empty to ignore it.");
+
+            string? vehicleType = ReadOptionalString("Vehicle type (Car, Motorcycle, Bus, Boat, Airplane): ");
+            string? color = ReadOptionalString("Color: ");
+            int? numberOfWheels = ReadOptionalInt("Number of wheels: ");
+
+            if (vehicleType == null && color == null && numberOfWheels == null)
+            {
+                Console.WriteLine("You did not enter any filter. Use option 1 to list all vehicles.");
+                return;
+            }
+
+            Vehicle[] result = garage.Search(vehicleType, color, numberOfWheels);
+
+            Console.WriteLine();
+            Console.WriteLine($"Search result ({result.Length} found):");
+            PrintVehicles(result);
+        }
+
+        // ---------- Sample data ----------
+        private static void AddSampleVehicles(Garage garage)
+        {
+            Vehicle[] samples =
+            {
+                new Car("ABC123", "Black", 4, FuelType.Gasoline),
+                new Car("DEF456", "Red", 4, FuelType.Electric),
+                new Motorcycle("MCP001", "Pink", 3, 600),
+                new Bus("BUS100", "Yellow", 6, 50),
+                new Boat("BOAT01", "White", 8.5),
+                new Airplane("SEABC1", "White", 3, 2)
+            };
+
+            int parkedCount = 0;
+            foreach (Vehicle sample in samples)
+            {
+                if (garage.Park(sample) == ParkResult.Success)
+                    parkedCount++;
+            }
+
+            Console.WriteLine($"{parkedCount} of {samples.Length} test vehicles were added automatically:");
+            PrintVehicles(garage.GetAllVehicles());
+        }
+
+        // ---------- Output helpers ----------
+        private static void PrintVehicles(Vehicle[] vehicles)
+        {
+            if (vehicles.Length == 0)
+            {
+                Console.WriteLine("  No vehicles found.");
+                return;
+            }
+
+            foreach (Vehicle vehicle in vehicles)
+            {
+                Console.WriteLine($"  {vehicle}");
+            }
+        }
+
+        private static void PrintParkResult(ParkResult result, Vehicle vehicle)
+        {
+            switch (result)
+            {
+                case ParkResult.Success:
+                    Console.WriteLine($"{vehicle.RegistrationNumber} was parked successfully.");
+                    break;
+                case ParkResult.GarageFull:
+                    Console.WriteLine($"Could not park {vehicle.RegistrationNumber}: the garage is full.");
+                    break;
+                case ParkResult.DuplicateRegistrationNumber:
+                    Console.WriteLine($"Could not park {vehicle.RegistrationNumber}: a vehicle with that registration number is already parked.");
+                    break;
+            }
+        }
+
+        // ---------- Input helpers (never crash on bad input) ----------
+        private static int ReadInt(string prompt, int min, int max)
+        {
+            while (true)
+            {
+                Console.Write(prompt);
+                string input = Console.ReadLine() ?? string.Empty;
+
+                if (int.TryParse(input, out int value) && value >= min && value <= max)
+                    return value;
+
+                Console.WriteLine($"Please enter a whole number between {min} and {max}.");
+            }
+        }
+
+        private static double ReadPositiveDouble(string prompt)
+        {
+            while (true)
+            {
+                Console.Write(prompt);
+                string input = Console.ReadLine() ?? string.Empty;
+
+                if (double.TryParse(input, out double value) && value > 0)
+                    return value;
+
+                Console.WriteLine("Please enter a number greater than zero.");
+            }
+        }
+
+        private static string ReadRequiredString(string prompt)
+        {
+            while (true)
+            {
+                Console.Write(prompt);
+                string input = Console.ReadLine() ?? string.Empty;
+
+                if (!string.IsNullOrWhiteSpace(input))
+                    return input.Trim();
+
+                Console.WriteLine("This field is required.");
+            }
+        }
+
+        private static string? ReadOptionalString(string prompt)
+        {
+            Console.Write(prompt);
+            string input = Console.ReadLine() ?? string.Empty;
+
+            if (string.IsNullOrWhiteSpace(input))
+                return null;
+
+            return input.Trim();
+        }
+
+        private static int? ReadOptionalInt(string prompt)
+        {
+            while (true)
+            {
+                Console.Write(prompt);
+                string input = Console.ReadLine() ?? string.Empty;
+
+                if (string.IsNullOrWhiteSpace(input))
+                    return null;
+
+                if (int.TryParse(input, out int value) && value >= 0)
+                    return value;
+
+                Console.WriteLine("Please enter a whole number, or leave it empty.");
+            }
+        }
+
+        private static bool ReadYesNo(string prompt)
+        {
+            while (true)
+            {
+                Console.Write(prompt);
+                string input = (Console.ReadLine() ?? string.Empty).Trim().ToLowerInvariant();
+
+                if (input == "y" || input == "yes")
+                    return true;
+                if (input == "n" || input == "no")
+                    return false;
+
+                Console.WriteLine("Please answer y or n.");
+            }
+        }
+
+        private static FuelType ReadFuelType()
+        {
+            Console.WriteLine("Fuel type: 1. Gasoline  2. Diesel  3. Electric");
+            int choice = ReadInt("Choose fuel type: ", 1, 3);
+
+            switch (choice)
+            {
+                case 1:
+                    return FuelType.Gasoline;
+                case 2:
+                    return FuelType.Diesel;
+                default:
+                    return FuelType.Electric;
+            }
+        }
+    }
+}
