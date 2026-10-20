@@ -168,7 +168,9 @@ namespace GarageApp
         }
 
         // null means "ignore this property"
-        public Vehicle[] Search(string? vehicleType, string? color, int? numberOfWheels)
+        public Vehicle[] Search(string? vehicleType, string? color, int? numberOfWheels,
+                                FuelType? fuelType, int? numberOfSeats, int? cylinderVolume,
+                                int? numberOfEngines, double? length)
         {
             Vehicle[] temp = new Vehicle[_vehicles.Length];
             int count = 0;
@@ -176,7 +178,9 @@ namespace GarageApp
             for (int i = 0; i < _vehicles.Length; i++)
             {
                 Vehicle? current = _vehicles[i];
-                if (current != null && Matches(current, vehicleType, color, numberOfWheels))
+                if (current != null && Matches(current, vehicleType, color, numberOfWheels,
+                                               fuelType, numberOfSeats, cylinderVolume,
+                                               numberOfEngines, length))
                 {
                     temp[count] = current;
                     count++;
@@ -186,8 +190,11 @@ namespace GarageApp
             return temp[..count];
         }
 
-        private static bool Matches(Vehicle vehicle, string? vehicleType, string? color, int? numberOfWheels)
+        private static bool Matches(Vehicle vehicle, string? vehicleType, string? color, int? numberOfWheels,
+                            FuelType? fuelType, int? numberOfSeats, int? cylinderVolume,
+                            int? numberOfEngines, double? length)
         {
+            // ---------- Common properties (all vehicles) ----------
             if (!string.IsNullOrWhiteSpace(vehicleType) &&
                 !string.Equals(vehicle.GetType().Name, vehicleType.Trim(), StringComparison.OrdinalIgnoreCase))
                 return false;
@@ -197,6 +204,30 @@ namespace GarageApp
                 return false;
 
             if (numberOfWheels.HasValue && vehicle.NumberOfWheels != numberOfWheels.Value)
+                return false;
+
+            // ---------- Specific properties (only one vehicle type has each) ----------
+            // If a filter is set, the vehicle must be that type AND have the right value
+
+            if (fuelType.HasValue &&
+                !(vehicle is Car car && car.FuelType == fuelType.Value))
+                return false;
+
+            if (numberOfSeats.HasValue &&
+                !(vehicle is Bus bus && bus.NumberOfSeats == numberOfSeats.Value))
+                return false;
+
+            if (cylinderVolume.HasValue &&
+                !(vehicle is Motorcycle motorcycle && motorcycle.CylinderVolume == cylinderVolume.Value))
+                return false;
+
+            if (numberOfEngines.HasValue &&
+                !(vehicle is Airplane airplane && airplane.NumberOfEngines == numberOfEngines.Value))
+                return false;
+
+            // double: compare with a small tolerance, never with == (8.5 can be stored as 8.4999999...)
+            if (length.HasValue &&
+                !(vehicle is Boat boat && Math.Abs(boat.Length - length.Value) < 0.01))
                 return false;
 
             return true;

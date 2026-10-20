@@ -76,7 +76,7 @@ namespace GarageApp
             Console.WriteLine(" 3. Park a vehicle");
             Console.WriteLine(" 4. Remove a vehicle");
             Console.WriteLine(" 5. Find a vehicle by registration number");
-            Console.WriteLine(" 6. Filter vehicles by type, color or wheels");
+            Console.WriteLine(" 6. Filter vehicles by properties");
             Console.WriteLine(" 0. Exit");
             Console.WriteLine("----------------------------------------");
         }
@@ -202,18 +202,32 @@ namespace GarageApp
         private static void SearchVehicles(Garage garage)
         {
             Console.WriteLine("Filter vehicles. Leave a field empty to ignore it.");
+            Console.WriteLine();
 
-            string? vehicleType = ReadOptionalString("Vehicle type (Car, Motorcycle, Bus, Boat, Airplane): ");
-            string? color = ReadOptionalString("Color: ");
-            int? numberOfWheels = ReadOptionalInt("Number of wheels: ");
+            Console.WriteLine("Common properties:");
+            string? vehicleType = ReadOptionalString("  Vehicle type (Car, Motorcycle, Bus, Boat, Airplane): ");
+            string? color = ReadOptionalString("  Color: ");
+            int? numberOfWheels = ReadOptionalInt("  Number of wheels: ");
 
-            if (vehicleType == null && color == null && numberOfWheels == null)
+            Console.WriteLine();
+            Console.WriteLine("Specific properties (only that vehicle type can match):");
+            FuelType? fuelType = ReadOptionalFuelType();
+            int? numberOfSeats = ReadOptionalInt("  Number of seats (Bus): ");
+            int? cylinderVolume = ReadOptionalInt("  Cylinder volume in cc (Motorcycle): ");
+            int? numberOfEngines = ReadOptionalInt("  Number of engines (Airplane): ");
+            double? length = ReadOptionalPositiveDouble("  Length in meters (Boat): ");
+
+            if (vehicleType == null && color == null && numberOfWheels == null &&
+                fuelType == null && numberOfSeats == null && cylinderVolume == null &&
+                numberOfEngines == null && length == null)
             {
                 Console.WriteLine("You did not enter any filter. Use option 1 to list all vehicles.");
                 return;
             }
 
-            Vehicle[] result = garage.Search(vehicleType, color, numberOfWheels);
+            Vehicle[] result = garage.Search(vehicleType, color, numberOfWheels,
+                                             fuelType, numberOfSeats, cylinderVolume,
+                                             numberOfEngines, length);
 
             Console.WriteLine();
             Console.WriteLine($"Search result ({result.Length} found):");
@@ -375,6 +389,47 @@ namespace GarageApp
                     return FuelType.Diesel;
                 default:
                     return FuelType.Electric;
+            }
+        }
+
+        private static FuelType? ReadOptionalFuelType()
+        {
+            while (true)
+            {
+                Console.Write("  Fuel type (Car) 1. Gasoline  2. Diesel  3. Electric: ");
+                string input = (Console.ReadLine() ?? string.Empty).Trim();
+
+                if (input == string.Empty)
+                    return null;
+
+                switch (input)
+                {
+                    case "1":
+                        return FuelType.Gasoline;
+                    case "2":
+                        return FuelType.Diesel;
+                    case "3":
+                        return FuelType.Electric;
+                }
+
+                Console.WriteLine("  Please enter 1, 2 or 3, or leave it empty.");
+            }
+        }
+
+        private static double? ReadOptionalPositiveDouble(string prompt)
+        {
+            while (true)
+            {
+                Console.Write(prompt);
+                string input = Console.ReadLine() ?? string.Empty;
+
+                if (string.IsNullOrWhiteSpace(input))
+                    return null;
+
+                if (double.TryParse(input, out double value) && value > 0)
+                    return value;
+
+                Console.WriteLine("  Please enter a number greater than zero, or leave it empty.");
             }
         }
     }
