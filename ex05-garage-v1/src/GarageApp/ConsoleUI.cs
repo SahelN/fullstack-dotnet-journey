@@ -10,42 +10,49 @@ namespace GarageApp
             Console.WriteLine("=== Garage App ===");
             Console.WriteLine();
 
-            int capacity = ReadInt("Number of parking spaces (1-1000): ", 1, 1000);
-            Garage garage = new Garage(capacity);
-            Console.WriteLine($"A garage with {garage.Capacity} parking spaces was created.");
+            Garage[] garages = CreateGarages();
 
+            Console.WriteLine();
             Console.WriteLine("You can start with 6 ready-made test vehicles (you don't need to type anything).");
             if (ReadYesNo("Do you want me to add them? (y/n): "))
             {
-                AddSampleVehicles(garage);
+                AddSampleVehicles(garages);
             }
+
+            Console.WriteLine();
+            int currentIndex = SwitchGarage(garages, -1);   // -1 = no garage chosen yet
 
             bool running = true;
             while (running)
             {
-                PrintMenu(garage);
-                int choice = ReadInt("Choose an option: ", 0, 6);
+                Garage current = garages[currentIndex];
+
+                PrintMenu(current);
+                int choice = ReadInt("Choose an option: ", 0, 7);
                 Console.WriteLine();
 
                 switch (choice)
                 {
                     case 1:
-                        ListAllVehicles(garage);
+                        ListAllVehicles(current);
                         break;
                     case 2:
-                        ListVehicleTypes(garage);
+                        ListVehicleTypes(current);
                         break;
                     case 3:
-                        ParkVehicle(garage);
+                        ParkVehicle(garages, current);
                         break;
                     case 4:
-                        RemoveVehicle(garage);
+                        RemoveVehicle(current);
                         break;
                     case 5:
-                        FindVehicle(garage);
+                        FindVehicle(garages, current);
                         break;
                     case 6:
-                        SearchVehicles(garage);
+                        SearchVehicles(current);
+                        break;
+                    case 7:
+                        currentIndex = SwitchGarage(garages, currentIndex);
                         break;
                     case 0:
                         running = false;
@@ -63,13 +70,56 @@ namespace GarageApp
             Console.WriteLine("Goodbye!");
         }
 
+        // ---------- Setup ----------
+        private static Garage[] CreateGarages()
+        {
+            // Fixed garages: the user only chooses the size
+            string[] names = { "Garage", "Motorcycle garage", "Hangar", "Harbor" };
+            string[][] allowedTypes =
+            {
+                new string[] { "Car", "Bus" },
+                new string[] { "Motorcycle" },
+                new string[] { "Airplane" },
+                new string[] { "Boat" }
+            };
+
+            Console.WriteLine($"This parking facility has {names.Length} garages. Each garage accepts different vehicle types:");
+            Console.WriteLine();
+
+            Console.WriteLine($"     {"Name",-18} {"Vehicle types"}");
+            Console.WriteLine($"     {new string('-', 18)} {new string('-', 13)}");
+
+            for (int i = 0; i < names.Length; i++)
+            {
+                Console.WriteLine($"  {i + 1}. {names[i],-18} {FormatTypes(allowedTypes[i])}");
+            }
+
+            Console.WriteLine();
+            Console.WriteLine("Please choose the number of parking spaces for each garage (1-1000).");
+            Console.WriteLine();
+
+            Garage[] garages = new Garage[names.Length];
+            int totalSpaces = 0;
+
+            for (int i = 0; i < names.Length; i++)
+            {
+                int capacity = ReadInt($"  {names[i] + ":",-19}", 1, 1000);
+                garages[i] = new Garage(names[i], capacity, allowedTypes[i]);
+                totalSpaces += capacity;
+            }
+
+            Console.WriteLine();
+            Console.WriteLine($"All {garages.Length} garages were created ({totalSpaces} parking spaces in total).");
+            return garages;
+        }
 
         // ---------- Menu ----------
-        private static void PrintMenu(Garage garage)
+        private static void PrintMenu(Garage current)
         {
             Console.WriteLine();
             Console.WriteLine("========================================");
-            Console.WriteLine($" GARAGE  ({garage.FreeSpaces} of {garage.Capacity} spaces free)");
+            Console.WriteLine($" {current.Name.ToUpperInvariant()}  ({current.FreeSpaces} of {current.Capacity} spaces free)");
+            Console.WriteLine($" Accepts: {FormatTypes(current.AllowedVehicleTypes)}");
             Console.WriteLine("========================================");
             Console.WriteLine(" 1. List all parked vehicles");
             Console.WriteLine(" 2. List vehicle types and counts");
@@ -77,6 +127,7 @@ namespace GarageApp
             Console.WriteLine(" 4. Remove a vehicle");
             Console.WriteLine(" 5. Find a vehicle by registration number");
             Console.WriteLine(" 6. Filter vehicles by properties");
+            Console.WriteLine(" 7. Switch garage");
             Console.WriteLine(" 0. Exit");
             Console.WriteLine("----------------------------------------");
         }
@@ -84,7 +135,7 @@ namespace GarageApp
         // ---------- Menu actions ----------
         private static void ListAllVehicles(Garage garage)
         {
-            Console.WriteLine("Parked vehicles:");
+            Console.WriteLine($"Parked vehicles in {garage.Name}:");
             PrintVehicles(garage.GetAllVehicles());
         }
 
@@ -94,34 +145,53 @@ namespace GarageApp
 
             if (typeCounts.Length == 0)
             {
-                Console.WriteLine("The garage is empty.");
+                Console.WriteLine($"{garage.Name} is empty.");
                 return;
             }
 
-            Console.WriteLine("Vehicle types in the garage:");
+            Console.WriteLine($"Vehicle types in {garage.Name}:");
             foreach (VehicleTypeCount typeCount in typeCounts)
             {
                 Console.WriteLine($"  {typeCount.TypeName,-11} {typeCount.Count}");
             }
         }
 
-        private static void ParkVehicle(Garage garage)
+        private static void ParkVehicle(Garage[] garages, Garage garage)
         {
             // Check early so the user doesn't type everything for nothing
             if (garage.IsFull)
             {
-                Console.WriteLine("The garage is full. Remove a vehicle first.");
+                Console.WriteLine($"{garage.Name} is full. Remove a vehicle or switch garage first.");
                 return;
             }
 
-            Console.WriteLine("Vehicle types: 1. Car  2. Motorcycle  3. Bus  4. Boat  5. Airplane");
-            int vehicleType = ReadInt("Choose vehicle type: ", 1, 5);
+            // Only show the vehicle types this garage accepts
+            string[] allowedTypes = garage.AllowedVehicleTypes;
+            string vehicleType;
+
+            if (allowedTypes.Length == 1)
+            {
+                vehicleType = allowedTypes[0];
+                Console.WriteLine($"Vehicle type: {vehicleType}");
+            }
+            else
+            {
+                Console.WriteLine($"Vehicle types in {garage.Name}:");
+                for (int i = 0; i < allowedTypes.Length; i++)
+                {
+                    Console.WriteLine($"  {i + 1}. {allowedTypes[i]}");
+                }
+                int typeChoice = ReadInt($"Choose vehicle type (1-{allowedTypes.Length}): ", 1, allowedTypes.Length);
+                vehicleType = allowedTypes[typeChoice - 1];
+            }
 
             string registrationNumber = ReadRequiredString("Registration number: ");
 
-            if (garage.FindByRegistrationNumber(registrationNumber) != null)
+            // Registration numbers must be unique in ALL garages, not just this one
+            Garage? garageWithVehicle = FindGarageWithVehicle(garages, registrationNumber);
+            if (garageWithVehicle != null)
             {
-                Console.WriteLine($"A vehicle with registration number {registrationNumber.ToUpperInvariant()} is already parked.");
+                Console.WriteLine($"A vehicle with registration number {registrationNumber.ToUpperInvariant()} is already parked in {garageWithVehicle.Name}.");
                 return;
             }
 
@@ -132,30 +202,33 @@ namespace GarageApp
             {
                 switch (vehicleType)
                 {
-                    case 1:
+                    case "Car":
                         int carWheels = ReadInt("Number of wheels (0-20): ", 0, 20);
                         FuelType fuelType = ReadFuelType();
                         vehicle = new Car(registrationNumber, color, carWheels, fuelType);
                         break;
-                    case 2:
+                    case "Motorcycle":
                         int motorcycleWheels = ReadInt("Number of wheels (0-20): ", 0, 20);
                         int cylinderVolume = ReadInt("Cylinder volume in cc (1-10000): ", 1, 10000);
                         vehicle = new Motorcycle(registrationNumber, color, motorcycleWheels, cylinderVolume);
                         break;
-                    case 3:
+                    case "Bus":
                         int busWheels = ReadInt("Number of wheels (0-20): ", 0, 20);
                         int numberOfSeats = ReadInt("Number of seats (1-200): ", 1, 200);
                         vehicle = new Bus(registrationNumber, color, busWheels, numberOfSeats);
                         break;
-                    case 4:
+                    case "Boat":
                         double length = ReadPositiveDouble("Length in meters: ");
                         vehicle = new Boat(registrationNumber, color, length);
                         break;
-                    default:
+                    case "Airplane":
                         int airplaneWheels = ReadInt("Number of wheels (0-20): ", 0, 20);
                         int numberOfEngines = ReadInt("Number of engines (1-10): ", 1, 10);
                         vehicle = new Airplane(registrationNumber, color, airplaneWheels, numberOfEngines);
                         break;
+                    default:
+                        Console.WriteLine($"Unknown vehicle type: {vehicleType}");
+                        return;
                 }
             }
             catch (ArgumentException ex)
@@ -166,7 +239,7 @@ namespace GarageApp
             }
 
             ParkResult result = garage.Park(vehicle);
-            PrintParkResult(result, vehicle);
+            PrintParkResult(result, vehicle, garage);
         }
 
         private static void RemoveVehicle(Garage garage)
@@ -175,37 +248,43 @@ namespace GarageApp
 
             if (garage.Remove(registrationNumber))
             {
-                Console.WriteLine($"{registrationNumber.ToUpperInvariant()} was removed from the garage.");
+                Console.WriteLine($"{registrationNumber.ToUpperInvariant()} was removed from {garage.Name}.");
             }
             else
             {
-                Console.WriteLine($"No vehicle with registration number {registrationNumber.ToUpperInvariant()} was found.");
+                Console.WriteLine($"No vehicle with registration number {registrationNumber.ToUpperInvariant()} was found in {garage.Name}.");
             }
         }
 
-        private static void FindVehicle(Garage garage)
+        private static void FindVehicle(Garage[] garages, Garage garage)
         {
             string registrationNumber = ReadRequiredString("Registration number: ");
             Vehicle? vehicle = garage.FindByRegistrationNumber(registrationNumber);
 
-            if (vehicle == null)
+            if (vehicle != null)
             {
-                Console.WriteLine($"No vehicle with registration number {registrationNumber.ToUpperInvariant()} was found.");
-            }
-            else
-            {
-                Console.WriteLine("Vehicle found:");
+                Console.WriteLine($"Vehicle found in {garage.Name}:");
                 Console.WriteLine($"  {vehicle}");
+                return;
+            }
+
+            Console.WriteLine($"No vehicle with registration number {registrationNumber.ToUpperInvariant()} was found in {garage.Name}.");
+
+            // Helpful hint: is it parked somewhere else?
+            Garage? otherGarage = FindGarageWithVehicle(garages, registrationNumber);
+            if (otherGarage != null)
+            {
+                Console.WriteLine($"Tip: it is parked in {otherGarage.Name}. Use option 7 to switch garage.");
             }
         }
 
         private static void SearchVehicles(Garage garage)
         {
-            Console.WriteLine("Filter vehicles. Leave a field empty to ignore it.");
+            Console.WriteLine($"Filter vehicles in {garage.Name}. Leave a field empty to ignore it.");
             Console.WriteLine();
 
             Console.WriteLine("Common properties:");
-            string? vehicleType = ReadOptionalString("  Vehicle type (Car, Motorcycle, Bus, Boat, Airplane): ");
+            string? vehicleType = ReadOptionalString($"  Vehicle type ({FormatTypes(garage.AllowedVehicleTypes)}): ");
             string? color = ReadOptionalString("  Color: ");
             int? numberOfWheels = ReadOptionalInt("  Number of wheels: ");
 
@@ -230,12 +309,36 @@ namespace GarageApp
                                              numberOfEngines, length);
 
             Console.WriteLine();
-            Console.WriteLine($"Search result ({result.Length} found):");
+            Console.WriteLine($"Search result in {garage.Name} ({result.Length} found):");
             PrintVehicles(result);
         }
 
+        private static int SwitchGarage(Garage[] garages, int currentIndex)
+        {
+            Console.WriteLine("Choose a garage:");
+            Console.WriteLine();
+
+            Console.WriteLine($"     {"Name",-18} {"Vehicle types",-13} Free spaces");
+            Console.WriteLine($"     {new string('-', 18)} {new string('-', 13)} {new string('-', 18)}");
+
+            for (int i = 0; i < garages.Length; i++)
+            {
+                Garage garage = garages[i];
+                string marker = i == currentIndex ? "  <- current" : "";
+                Console.WriteLine($"  {i + 1}. {garage.Name,-18} {FormatTypes(garage.AllowedVehicleTypes),-13} " +
+                                  $"({garage.FreeSpaces} of {garage.Capacity}){marker}");
+            }
+
+            Console.WriteLine();
+            int choice = ReadInt($"Choose garage (1-{garages.Length}): ", 1, garages.Length);
+            int newIndex = choice - 1;
+
+            Console.WriteLine($"You are now working in: {garages[newIndex].Name}");
+            return newIndex;
+        }
+
         // ---------- Sample data ----------
-        private static void AddSampleVehicles(Garage garage)
+        private static void AddSampleVehicles(Garage[] garages)
         {
             Vehicle[] samples =
             {
@@ -250,12 +353,44 @@ namespace GarageApp
             int parkedCount = 0;
             foreach (Vehicle sample in samples)
             {
-                if (garage.Park(sample) == ParkResult.Success)
-                    parkedCount++;
+                // Park each vehicle in the first garage that accepts its type
+                for (int g = 0; g < garages.Length; g++)
+                {
+                    if (garages[g].Accepts(sample))
+                    {
+                        if (garages[g].Park(sample) == ParkResult.Success)
+                            parkedCount++;
+                        break;
+                    }
+                }
             }
 
             Console.WriteLine($"{parkedCount} of {samples.Length} test vehicles were added automatically:");
-            PrintVehicles(garage.GetAllVehicles());
+            for (int g = 0; g < garages.Length; g++)
+            {
+                Vehicle[] vehicles = garages[g].GetAllVehicles();
+                if (vehicles.Length > 0)
+                {
+                    Console.WriteLine($" {garages[g].Name}:");
+                    PrintVehicles(vehicles);
+                }
+            }
+        }
+
+        // ---------- Helpers ----------
+        private static Garage? FindGarageWithVehicle(Garage[] garages, string registrationNumber)
+        {
+            for (int g = 0; g < garages.Length; g++)
+            {
+                if (garages[g].FindByRegistrationNumber(registrationNumber) != null)
+                    return garages[g];
+            }
+            return null;
+        }
+
+        private static string FormatTypes(string[] types)
+        {
+            return string.Join(", ", types);
         }
 
         // ---------- Output helpers ----------
@@ -273,18 +408,21 @@ namespace GarageApp
             }
         }
 
-        private static void PrintParkResult(ParkResult result, Vehicle vehicle)
+        private static void PrintParkResult(ParkResult result, Vehicle vehicle, Garage garage)
         {
             switch (result)
             {
                 case ParkResult.Success:
-                    Console.WriteLine($"{vehicle.RegistrationNumber} was parked successfully.");
+                    Console.WriteLine($"{vehicle.RegistrationNumber} was parked in {garage.Name}.");
                     break;
                 case ParkResult.GarageFull:
-                    Console.WriteLine($"Could not park {vehicle.RegistrationNumber}: the garage is full.");
+                    Console.WriteLine($"Could not park {vehicle.RegistrationNumber}: {garage.Name} is full.");
                     break;
                 case ParkResult.DuplicateRegistrationNumber:
                     Console.WriteLine($"Could not park {vehicle.RegistrationNumber}: a vehicle with that registration number is already parked.");
+                    break;
+                case ParkResult.WrongVehicleType:
+                    Console.WriteLine($"Could not park {vehicle.RegistrationNumber}: {garage.Name} only accepts {FormatTypes(garage.AllowedVehicleTypes)}.");
                     break;
             }
         }
@@ -360,6 +498,23 @@ namespace GarageApp
             }
         }
 
+        private static double? ReadOptionalPositiveDouble(string prompt)
+        {
+            while (true)
+            {
+                Console.Write(prompt);
+                string input = Console.ReadLine() ?? string.Empty;
+
+                if (string.IsNullOrWhiteSpace(input))
+                    return null;
+
+                if (double.TryParse(input, out double value) && value > 0)
+                    return value;
+
+                Console.WriteLine("  Please enter a number greater than zero, or leave it empty.");
+            }
+        }
+
         private static bool ReadYesNo(string prompt)
         {
             while (true)
@@ -413,23 +568,6 @@ namespace GarageApp
                 }
 
                 Console.WriteLine("  Please enter 1, 2 or 3, or leave it empty.");
-            }
-        }
-
-        private static double? ReadOptionalPositiveDouble(string prompt)
-        {
-            while (true)
-            {
-                Console.Write(prompt);
-                string input = Console.ReadLine() ?? string.Empty;
-
-                if (string.IsNullOrWhiteSpace(input))
-                    return null;
-
-                if (double.TryParse(input, out double value) && value > 0)
-                    return value;
-
-                Console.WriteLine("  Please enter a number greater than zero, or leave it empty.");
             }
         }
     }

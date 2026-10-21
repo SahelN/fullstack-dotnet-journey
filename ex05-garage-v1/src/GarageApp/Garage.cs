@@ -6,10 +6,19 @@ namespace GarageApp
     public class Garage
     {
         private readonly Vehicle?[] _vehicles;
+        private readonly string[] _allowedVehicleTypes;
+
+        public string Name { get; }
 
         public int Capacity
         {
             get { return _vehicles.Length; }
+        }
+
+        // Returns a copy, so nobody outside can change the garage's rules
+        public string[] AllowedVehicleTypes
+        {
+            get { return _allowedVehicleTypes[..]; }
         }
 
         public int ParkedVehicleCount
@@ -36,17 +45,52 @@ namespace GarageApp
             get { return ParkedVehicleCount == Capacity; }
         }
 
-        public Garage(int capacity)
+        public Garage(string name, int capacity, string[] allowedVehicleTypes)
         {
+            if (string.IsNullOrWhiteSpace(name))
+                throw new ArgumentException("Garage name is required.", nameof(name));
+
             if (capacity < 1)
                 throw new ArgumentOutOfRangeException(nameof(capacity), "Capacity must be greater than zero.");
 
+            ArgumentNullException.ThrowIfNull(allowedVehicleTypes);
+
+            if (allowedVehicleTypes.Length == 0)
+                throw new ArgumentException("At least one vehicle type is required.", nameof(allowedVehicleTypes));
+
+            for (int i = 0; i < allowedVehicleTypes.Length; i++)
+            {
+                if (string.IsNullOrWhiteSpace(allowedVehicleTypes[i]))
+                    throw new ArgumentException("Vehicle types cannot be empty.", nameof(allowedVehicleTypes));
+            }
+
+            Name = name.Trim();
             _vehicles = new Vehicle?[capacity];
+            _allowedVehicleTypes = allowedVehicleTypes[..];   // keep our own copy
+        }
+
+        // Can this garage take this kind of vehicle?
+        public bool Accepts(Vehicle vehicle)
+        {
+            ArgumentNullException.ThrowIfNull(vehicle);
+
+            string typeName = vehicle.GetType().Name;
+
+            for (int i = 0; i < _allowedVehicleTypes.Length; i++)
+            {
+                if (string.Equals(_allowedVehicleTypes[i], typeName, StringComparison.OrdinalIgnoreCase))
+                    return true;
+            }
+            return false;
         }
 
         public ParkResult Park(Vehicle vehicle)
         {
             ArgumentNullException.ThrowIfNull(vehicle);
+
+            // The UI only offers allowed types, but Garage must protect its own rules
+            if (!Accepts(vehicle))
+                return ParkResult.WrongVehicleType;
 
             int freeIndex = -1;
 
@@ -191,8 +235,8 @@ namespace GarageApp
         }
 
         private static bool Matches(Vehicle vehicle, string? vehicleType, string? color, int? numberOfWheels,
-                            FuelType? fuelType, int? numberOfSeats, int? cylinderVolume,
-                            int? numberOfEngines, double? length)
+                                    FuelType? fuelType, int? numberOfSeats, int? cylinderVolume,
+                                    int? numberOfEngines, double? length)
         {
             // ---------- Common properties (all vehicles) ----------
             if (!string.IsNullOrWhiteSpace(vehicleType) &&
