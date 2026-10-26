@@ -1,38 +1,27 @@
 ﻿using GarageApp.Vehicles;
 using System;
+using System.Collections.Generic;
 
 namespace GarageApp
 {
     public class Garage
     {
-        private readonly Vehicle?[] _vehicles;
-        private readonly string[] _allowedVehicleTypes;
+        private readonly List<Vehicle> _vehicles = new List<Vehicle>();
+        private readonly List<string> _allowedVehicleTypes = new List<string>();
 
         public string Name { get; }
 
-        public int Capacity
-        {
-            get { return _vehicles.Length; }
-        }
+        public int Capacity { get; }
 
         // Returns a copy, so nobody outside can change the garage's rules
-        public string[] AllowedVehicleTypes
+        public List<string> AllowedVehicleTypes
         {
-            get { return _allowedVehicleTypes[..]; }
+            get { return new List<string>(_allowedVehicleTypes); }
         }
 
         public int ParkedVehicleCount
         {
-            get
-            {
-                int count = 0;
-                for (int i = 0; i < _vehicles.Length; i++)
-                {
-                    if (_vehicles[i] != null)
-                        count++;
-                }
-                return count;
-            }
+            get { return _vehicles.Count; }
         }
 
         public int FreeSpaces
@@ -45,7 +34,7 @@ namespace GarageApp
             get { return ParkedVehicleCount == Capacity; }
         }
 
-        public Garage(string name, int capacity, string[] allowedVehicleTypes)
+        public Garage(string name, int capacity, List<string> allowedVehicleTypes)
         {
             if (string.IsNullOrWhiteSpace(name))
                 throw new ArgumentException("Garage name is required.", nameof(name));
@@ -55,18 +44,18 @@ namespace GarageApp
 
             ArgumentNullException.ThrowIfNull(allowedVehicleTypes);
 
-            if (allowedVehicleTypes.Length == 0)
+            if (allowedVehicleTypes.Count == 0)
                 throw new ArgumentException("At least one vehicle type is required.", nameof(allowedVehicleTypes));
 
-            for (int i = 0; i < allowedVehicleTypes.Length; i++)
+            foreach (string type in allowedVehicleTypes)
             {
-                if (string.IsNullOrWhiteSpace(allowedVehicleTypes[i]))
+                if (string.IsNullOrWhiteSpace(type))
                     throw new ArgumentException("Vehicle types cannot be empty.", nameof(allowedVehicleTypes));
             }
 
             Name = name.Trim();
-            _vehicles = new Vehicle?[capacity];
-            _allowedVehicleTypes = allowedVehicleTypes[..];   // keep our own copy
+            Capacity = capacity;
+            _allowedVehicleTypes.AddRange(allowedVehicleTypes);   // keep our own copy
         }
 
         // Can this garage take this kind of vehicle?
@@ -76,9 +65,9 @@ namespace GarageApp
 
             string typeName = vehicle.GetType().Name;
 
-            for (int i = 0; i < _allowedVehicleTypes.Length; i++)
+            foreach (string allowedType in _allowedVehicleTypes)
             {
-                if (string.Equals(_allowedVehicleTypes[i], typeName, StringComparison.OrdinalIgnoreCase))
+                if (string.Equals(allowedType, typeName, StringComparison.OrdinalIgnoreCase))
                     return true;
             }
             return false;
@@ -88,150 +77,98 @@ namespace GarageApp
         {
             ArgumentNullException.ThrowIfNull(vehicle);
 
+            if (IsFull)
+                return ParkResult.GarageFull;
+
             // The UI only offers allowed types, but Garage must protect its own rules
             if (!Accepts(vehicle))
                 return ParkResult.WrongVehicleType;
 
-            int freeIndex = -1;
+            if (IndexOf(vehicle.RegistrationNumber) != -1)
+                return ParkResult.DuplicateRegistrationNumber;
 
-            for (int i = 0; i < _vehicles.Length; i++)
-            {
-                Vehicle? current = _vehicles[i];
-
-                if (current == null)
-                {
-                    // Remember the first free space, but keep looking for duplicates
-                    if (freeIndex == -1)
-                        freeIndex = i;
-                }
-                else if (current.RegistrationNumber == vehicle.RegistrationNumber)
-                {
-                    return ParkResult.DuplicateRegistrationNumber;
-                }
-            }
-
-            if (freeIndex == -1)
-                return ParkResult.GarageFull;
-
-            _vehicles[freeIndex] = vehicle;
+            _vehicles.Add(vehicle);
             return ParkResult.Success;
         }
 
         public bool Remove(string registrationNumber)
         {
-            string normalizedNumber = NormalizeRegistrationNumber(registrationNumber);
+            int index = IndexOf(registrationNumber);
+            if (index == -1)
+                return false;   // not found
 
-            for (int i = 0; i < _vehicles.Length; i++)
-            {
-                Vehicle? current = _vehicles[i];
-
-                if (current != null && current.RegistrationNumber == normalizedNumber)
-                {
-                    _vehicles[i] = null;
-                    return true;
-                }
-            }
-            return false;
+            _vehicles.RemoveAt(index);
+            return true;
         }
 
         public Vehicle? FindByRegistrationNumber(string registrationNumber)
         {
-            string normalizedNumber = NormalizeRegistrationNumber(registrationNumber);
+            int index = IndexOf(registrationNumber);
+            if (index == -1)
+                return null;
 
-            for (int i = 0; i < _vehicles.Length; i++)
-            {
-                Vehicle? current = _vehicles[i];
-
-                if (current != null && current.RegistrationNumber == normalizedNumber)
-                    return current;
-            }
-            return null;
+            return _vehicles[index];
         }
 
-        public Vehicle[] GetAllVehicles()
+        public List<Vehicle> GetAllVehicles()
         {
-            Vehicle[] temp = new Vehicle[_vehicles.Length];
-            int count = 0;
-
-            for (int i = 0; i < _vehicles.Length; i++)
-            {
-                Vehicle? current = _vehicles[i];
-                if (current != null)
-                {
-                    temp[count] = current;
-                    count++;
-                }
-            }
-
-            return temp[..count];
+            return new List<Vehicle>(_vehicles);
         }
 
-        public VehicleTypeCount[] GetVehicleTypeCounts()
+        public List<VehicleTypeCount> GetVehicleTypeCounts()
         {
-            // There can never be more different types than parking spaces
-            string[] typeNames = new string[_vehicles.Length];
-            int[] counts = new int[_vehicles.Length];
-            int numberOfTypes = 0;
+            // Key = type name (e.g. "Car"), value = how many of that type are parked
+            Dictionary<string, int> counts = new Dictionary<string, int>();
 
-            for (int i = 0; i < _vehicles.Length; i++)
+            foreach (Vehicle vehicle in _vehicles)
             {
-                Vehicle? current = _vehicles[i];
-                if (current == null)
-                    continue;
+                string typeName = vehicle.GetType().Name;
 
-                string typeName = current.GetType().Name;
-
-                int typeIndex = -1;
-                for (int t = 0; t < numberOfTypes; t++)
-                {
-                    if (typeNames[t] == typeName)
-                    {
-                        typeIndex = t;
-                        break;
-                    }
-                }
-
-                if (typeIndex == -1)
-                {
-                    typeNames[numberOfTypes] = typeName;
-                    counts[numberOfTypes] = 1;
-                    numberOfTypes++;
-                }
+                if (counts.ContainsKey(typeName))
+                    counts[typeName]++;
                 else
-                {
-                    counts[typeIndex]++;
-                }
+                    counts[typeName] = 1;
             }
 
-            VehicleTypeCount[] result = new VehicleTypeCount[numberOfTypes];
-            for (int t = 0; t < numberOfTypes; t++)
+            List<VehicleTypeCount> result = new List<VehicleTypeCount>();
+            foreach (KeyValuePair<string, int> pair in counts)
             {
-                result[t] = new VehicleTypeCount(typeNames[t], counts[t]);
+                result.Add(new VehicleTypeCount(pair.Key, pair.Value));
             }
             return result;
         }
 
         // null means "ignore this property"
-        public Vehicle[] Search(string? vehicleType, string? color, int? numberOfWheels,
-                                FuelType? fuelType, int? numberOfSeats, int? cylinderVolume,
-                                int? numberOfEngines, double? length)
+        public List<Vehicle> Search(string? vehicleType, string? color, int? numberOfWheels,
+                                    FuelType? fuelType, int? numberOfSeats, int? cylinderVolume,
+                                    int? numberOfEngines, double? length)
         {
-            Vehicle[] temp = new Vehicle[_vehicles.Length];
-            int count = 0;
+            List<Vehicle> result = new List<Vehicle>();
 
-            for (int i = 0; i < _vehicles.Length; i++)
+            foreach (Vehicle vehicle in _vehicles)
             {
-                Vehicle? current = _vehicles[i];
-                if (current != null && Matches(current, vehicleType, color, numberOfWheels,
-                                               fuelType, numberOfSeats, cylinderVolume,
-                                               numberOfEngines, length))
+                if (Matches(vehicle, vehicleType, color, numberOfWheels,
+                            fuelType, numberOfSeats, cylinderVolume,
+                            numberOfEngines, length))
                 {
-                    temp[count] = current;
-                    count++;
+                    result.Add(vehicle);
                 }
             }
 
-            return temp[..count];
+            return result;
+        }
+
+        // One place for "find the position of this registration number" (used by Park, Remove and Find)
+        private int IndexOf(string registrationNumber)
+        {
+            string normalizedNumber = NormalizeRegistrationNumber(registrationNumber);
+
+            for (int i = 0; i < _vehicles.Count; i++)
+            {
+                if (_vehicles[i].RegistrationNumber == normalizedNumber)
+                    return i;
+            }
+            return -1;
         }
 
         private static bool Matches(Vehicle vehicle, string? vehicleType, string? color, int? numberOfWheels,
