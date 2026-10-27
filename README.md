@@ -17,6 +17,7 @@ API to frontend.
 | 04  | [Encapsulation](ex04-encapsulation/)         | Private fields + properties with `private set`, validation in setters, constructor via properties, `ArgumentException`, `decimal` with `InvariantCulture`, input validation with `TryParse`  | Done   |
 | 05  | [Garage v1 (arrays)](ex05-garage-v1/)        | Inheritance, abstract class, private arrays (no collections/LINQ), Range operator, `enum` for results, nullable types, console UI class, robust input with `TryParse`                        | Done   |
 | 06  | [Garage v2 (List)](ex06-garage-v2/)          | `List<T>` instead of arrays, returning copies to protect encapsulation, `Dictionary<TKey,TValue>` for counting, private helper to avoid duplicated logic, context-aware filter menu, no LINQ | Done   |
+| 07  | [LINQ](ex07-linq/)                           | `Where`, `Select` with anonymous types, `OrderBy`/`OrderByDescending`, `Count`, `Take`, `Distinct`, `Any`/`All`, `FirstOrDefault`/`Last`/`Single`, `GroupBy`, `Sum`/`Average`/`Min`/`Max` | Done   |
 
 ## Tech stack
 
