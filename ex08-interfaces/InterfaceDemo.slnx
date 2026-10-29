@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="src/InterfaceDemoExtra/InterfaceDemoExtra.csproj" Id="517b6d9d-cdf8-41f4-906a-676fe5ffbcd1" />
+  <Project Path="src\InterfaceDemo\InterfaceDemo.csproj" />
+</Solution>
