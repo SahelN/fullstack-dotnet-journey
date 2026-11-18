@@ -1,0 +1,20 @@
+@HostAddress = http://localhost:5208
+
+### Hämta alla kunder
+GET {{HostAddress}}/api/customers
+Accept: application/json
+
+### Hämta en kund med ordrar
+GET {{HostAddress}}/api/customers/1
+Accept: application/json
+
+### Skapa kund
+POST {{HostAddress}}/api/customers
+Content-Type: application/json
+
+{
+  "firstName": "Sara",
+  "lastName": "Ek",
+  "email": "sara.ek@email.com",
+  "phone": "070-1112233"
+}
