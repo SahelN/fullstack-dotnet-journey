@@ -18,10 +18,28 @@ public class ProductsController : ControllerBase
     }
 
     // GET: api/products
+    // GET: api/products?category=Verktyg
+    // GET: api/products?name=ham
+    // GET: api/products?category=Verktyg&name=ham
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<ProductDto>>> GetProducts()
+    public async Task<ActionResult<IEnumerable<ProductDto>>> GetProducts(
+        [FromQuery] string? category,
+        [FromQuery] string? name)
     {
-        var products = await _context.Products
+        // IQueryable – filtren byggs på innan något skickas till databasen
+        var query = _context.Products.AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(category))
+        {
+            query = query.Where(p => p.Category == category);
+        }
+
+        if (!string.IsNullOrWhiteSpace(name))
+        {
+            query = query.Where(p => p.Name.Contains(name));
+        }
+
+        var products = await query
             .OrderBy(p => p.Id)
             .Select(p => new ProductDto
             {
@@ -35,8 +53,24 @@ public class ProductsController : ControllerBase
         return Ok(products);
     }
 
+    // GET: api/products/stats
+    [HttpGet("stats")]
+    public async Task<ActionResult<ProductStatsDto>> GetStats()
+    {
+        var stats = new ProductStatsDto
+        {
+            TotalProducts = await _context.Products.CountAsync(),
+            TotalItemsInStock = await _context.Products.SumAsync(p => p.Count),
+            TotalInventoryValue = await _context.Products.SumAsync(p => p.Price * p.Count),
+            // (double?) gör att en tom tabell ger null i stället för ett exception
+            AveragePrice = Math.Round(await _context.Products.AverageAsync(p => (double?)p.Price) ?? 0, 2)
+        };
+
+        return Ok(stats);
+    }
+
     // GET: api/products/5
-    [HttpGet("{id}")]
+    [HttpGet("{id:int}")]
     public async Task<ActionResult<ProductDto>> GetProduct(int id)
     {
         var product = await _context.Products.FindAsync(id);
@@ -50,7 +84,7 @@ public class ProductsController : ControllerBase
     }
 
     // PUT: api/products/5
-    [HttpPut("{id}")]
+    [HttpPut("{id:int}")]
     public async Task<IActionResult> PutProduct(int id, CreateProductDto dto)
     {
         var product = await _context.Products.FindAsync(id);
@@ -95,7 +129,7 @@ public class ProductsController : ControllerBase
     }
 
     // DELETE: api/products/5
-    [HttpDelete("{id}")]
+    [HttpDelete("{id:int}")]
     public async Task<IActionResult> DeleteProduct(int id)
     {
         var product = await _context.Products.FindAsync(id);

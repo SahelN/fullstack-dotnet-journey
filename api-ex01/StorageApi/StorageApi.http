@@ -1,6 +1,46 @@
 @StorageApi_HostAddress = http://localhost:5051
 
-GET {{StorageApi_HostAddress}}/weatherforecast/
+### Hämta alla produkter
+GET {{StorageApi_HostAddress}}/api/products
 Accept: application/json
 
-###
+### Hämta en produkt
+GET {{StorageApi_HostAddress}}/api/products/1
+Accept: application/json
+
+### Sök på kategori
+GET {{StorageApi_HostAddress}}/api/products?category=Verktyg
+Accept: application/json
+
+### Sök på kategori och namn
+GET {{StorageApi_HostAddress}}/api/products?category=Verktyg&name=ham
+Accept: application/json
+
+### Statistik
+GET {{StorageApi_HostAddress}}/api/products/stats
+Accept: application/json
+
+### Skapa produkt
+POST {{StorageApi_HostAddress}}/api/products
+Content-Type: application/json
+
+{
+  "name": "Skruvmejsel",
+  "price": 89,
+  "category": "Verktyg",
+  "shelf": "A3",
+  "count": 25,
+  "description": "Stjärnskruvmejsel PH2"
+}
+
+### Skapa produkt med ogiltig data (ska ge 400)
+POST {{StorageApi_HostAddress}}/api/products
+Content-Type: application/json
+
+{
+  "name": "",
+  "price": -5,
+  "category": "Verktyg",
+  "shelf": "A3",
+  "count": 1
+}
