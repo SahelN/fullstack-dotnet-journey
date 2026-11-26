@@ -1,11 +1,12 @@
 using Microsoft.EntityFrameworkCore;
 using MovieApi.Data;
+using MovieApi.Extensions;
 
 namespace MovieApi
 {
     public class Program
     {
-        public static void Main(string[] args)
+        public static async Task Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
             var connectionString = builder.Configuration.GetConnectionString("MovieContext") ?? throw new InvalidOperationException("Connection string 'MovieContext' not found.");
@@ -24,6 +25,7 @@ namespace MovieApi
             if (app.Environment.IsDevelopment())
             {
                 app.MapOpenApi();
+                await app.SeedData();
             }
 
             app.UseHttpsRedirection();
@@ -33,7 +35,7 @@ namespace MovieApi
 
             app.MapControllers();
 
-            app.Run();
+            await app.RunAsync();
         }
     }
 }
