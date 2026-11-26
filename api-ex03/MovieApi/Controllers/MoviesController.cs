@@ -16,7 +16,7 @@ public class MoviesController : ControllerBase
         _context = context;
     }
 
-    // GET: api/Movie
+    // GET: api/movies
     [HttpGet]
     public async Task<ActionResult<IEnumerable<MovieDto>>> GetMovies(
         [FromQuery] string? genre,
@@ -47,7 +47,7 @@ public class MoviesController : ControllerBase
         return Ok(movies);
     }
 
-    // GET: api/Movie/5
+    // GET: api/movies/{id}
     [HttpGet("{id}")]
     public async Task<ActionResult<MovieDto>> GetMovie(int id)
     {
@@ -71,8 +71,57 @@ public class MoviesController : ControllerBase
         return Ok(movie);
     }
 
-    // PUT: api/Movie/5
-    // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+    // GET: api/movies/{id}/details
+    [HttpGet("{id}/details")]
+    public async Task<ActionResult<MovieDetailDto>> GetMovieDetails(int id)
+    {
+        var movie = await _context.Movies
+            .Where(m => m.Id == id)
+            .Select(m => new MovieDetailDto
+            {
+                // Movie data
+                Id = m.Id,
+                Title = m.Title,
+                Year = m.Year,
+                Duration = m.Duration,
+                Genre = m.Genre != null ? m.Genre.Name : null,
+
+                // MovieDetails (flattened)
+                Synopsis = m.MovieDetails != null ? m.MovieDetails.Synopsis : null,
+                Language = m.MovieDetails != null ? m.MovieDetails.Language : null,
+                Budget = m.MovieDetails != null ? m.MovieDetails.Budget : null,
+
+                // Related lists
+                Reviews = m.Reviews
+                    .Select(r => new ReviewDto
+                    {
+                        Id = r.Id,
+                        ReviewerName = r.ReviewerName,
+                        Comment = r.Comment,
+                        Rating = r.Rating
+                    })
+                    .ToList(),
+
+                Actors = m.Actors
+                    .Select(a => new ActorDto
+                    {
+                        Id = a.Id,
+                        Name = a.Name,
+                        BirthYear = a.BirthYear
+                    })
+                    .ToList()
+            })
+            .FirstOrDefaultAsync();
+
+        if (movie is null)
+        {
+            return NotFound();
+        }
+
+        return Ok(movie);
+    }
+
+    // PUT: api/movies/{id}
     [HttpPut("{id}")]
     public async Task<IActionResult> PutMovie(int id, MovieUpdateDto dto)
     {
@@ -96,8 +145,7 @@ public class MoviesController : ControllerBase
         return NoContent();
     }
 
-    // POST: api/Movie
-    // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+    // POST: api/movies
     [HttpPost]
     public async Task<ActionResult<MovieDto>> PostMovie(MovieCreateDto dto)
     {
@@ -131,7 +179,7 @@ public class MoviesController : ControllerBase
         return CreatedAtAction(nameof(GetMovie), new { id = movie.Id }, result);
     }
 
-    // DELETE: api/Movie/5
+    // DELETE: api/movies/{id}
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteMovie(int id)
     {
