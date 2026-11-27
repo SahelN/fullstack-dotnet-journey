@@ -126,4 +126,45 @@ public class ActorsController : ControllerBase
 
         return NoContent();
     }
+
+    // POST: api/movies/{movieId}/actors
+    [HttpPost("movies/{movieId}/actors")]
+    public async Task<ActionResult<MovieActorDto>> AddActorToMovieWithRole(int movieId, MovieActorCreateDto dto)
+    {
+        if (!await _context.Movies.AnyAsync(m => m.Id == movieId))
+        {
+            return NotFound($"Movie with id {movieId} does not exist.");
+        }
+
+        var actor = await _context.Actors.FindAsync(dto.ActorId!.Value);
+
+        if (actor is null)
+        {
+            return NotFound($"Actor with id {dto.ActorId} does not exist.");
+        }
+
+        if (await _context.MovieActors.AnyAsync(ma => ma.MovieId == movieId && ma.ActorId == dto.ActorId))
+        {
+            return Conflict($"Actor {dto.ActorId} is already in movie {movieId}.");
+        }
+
+        var movieActor = new MovieActor
+        {
+            MovieId = movieId,
+            ActorId = actor.Id,
+            Role = dto.Role
+        };
+
+        _context.MovieActors.Add(movieActor);
+        await _context.SaveChangesAsync();
+
+        var result = new MovieActorDto
+        {
+            ActorId = actor.Id,
+            Name = actor.Name,
+            Role = movieActor.Role
+        };
+
+        return Created($"/api/movies/{movieId}/details", result);
+    }
 }

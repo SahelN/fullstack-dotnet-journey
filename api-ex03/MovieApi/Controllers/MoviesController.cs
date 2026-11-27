@@ -103,11 +103,11 @@ public class MoviesController : ControllerBase
                     .ToList(),
 
                 Actors = m.MovieActors
-                    .Select(ma => new ActorDto
+                    .Select(ma => new MovieActorDto
                     {
-                        Id = ma.Actor.Id,
+                        ActorId = ma.Actor.Id,
                         Name = ma.Actor.Name,
-                        BirthYear = ma.Actor.BirthYear
+                        Role = ma.Role
                     })
                     .ToList()
             })

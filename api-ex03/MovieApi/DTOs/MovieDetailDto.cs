@@ -16,5 +16,5 @@ public record MovieDetailDto
 
     // Related lists
     public List<ReviewDto> Reviews { get; init; } = [];
-    public List<ActorDto> Actors { get; init; } = [];
+    public List<MovieActorDto> Actors { get; init; } = [];
 }
