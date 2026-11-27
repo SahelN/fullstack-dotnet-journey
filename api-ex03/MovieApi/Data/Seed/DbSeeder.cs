@@ -66,7 +66,12 @@ public static class DbSeeder
                 Language = "English",
                 Budget = 1_200_000m
             },
-            Actors = [actors["Harvey Keitel"], actors["Tim Roth"], actors["Steve Buscemi"]],
+            MovieActors =
+            [
+                new MovieActor { Actor = actors["Harvey Keitel"], Role = "Mr. White" },
+                new MovieActor { Actor = actors["Tim Roth"], Role = "Mr. Orange" },
+                new MovieActor { Actor = actors["Steve Buscemi"], Role = "Mr. Pink" }
+            ],
             Reviews =
             [
                 new Review { ReviewerName = "Anna Berg", Comment = "Tense dialogue and a brilliant non-linear story.", Rating = 5 },
@@ -85,7 +90,14 @@ public static class DbSeeder
                 Language = "English",
                 Budget = 8_500_000m
             },
-            Actors = [actors["Samuel L. Jackson"], actors["John Travolta"], actors["Uma Thurman"], actors["Tim Roth"], actors["Harvey Keitel"]],
+            MovieActors =
+            [
+                new MovieActor { Actor = actors["Samuel L. Jackson"], Role = "Jules Winnfield" },
+                new MovieActor { Actor = actors["John Travolta"], Role = "Vincent Vega" },
+                new MovieActor { Actor = actors["Uma Thurman"], Role = "Mia Wallace" },
+                new MovieActor { Actor = actors["Tim Roth"], Role = "Pumpkin" },
+                new MovieActor { Actor = actors["Harvey Keitel"], Role = "Winston Wolfe" }
+            ],
             Reviews =
             [
                 new Review { ReviewerName = "Sara Holm", Comment = "A classic with unforgettable scenes.", Rating = 5 },
@@ -104,7 +116,13 @@ public static class DbSeeder
                 Language = "English",
                 Budget = 100_000_000m
             },
-            Actors = [actors["Jamie Foxx"], actors["Christoph Waltz"], actors["Leonardo DiCaprio"], actors["Samuel L. Jackson"]],
+            MovieActors =
+            [
+                new MovieActor { Actor = actors["Jamie Foxx"], Role = "Django" },
+                new MovieActor { Actor = actors["Christoph Waltz"], Role = "Dr. King Schultz" },
+                new MovieActor { Actor = actors["Leonardo DiCaprio"], Role = "Calvin Candie" },
+                new MovieActor { Actor = actors["Samuel L. Jackson"], Role = "Stephen" }
+            ],
             Reviews =
             [
                 new Review { ReviewerName = "Maria Ek", Comment = "Christoph Waltz steals every scene.", Rating = 5 }
@@ -122,7 +140,11 @@ public static class DbSeeder
                 Language = "English",
                 Budget = 160_000_000m
             },
-            Actors = [actors["Leonardo DiCaprio"], actors["Joseph Gordon-Levitt"]],
+            MovieActors =
+            [
+                new MovieActor { Actor = actors["Leonardo DiCaprio"], Role = "Dom Cobb" },
+                new MovieActor { Actor = actors["Joseph Gordon-Levitt"], Role = "Arthur" }
+            ],
             Reviews =
             [
                 new Review { ReviewerName = "Anna Berg", Comment = "Smart and visually stunning.", Rating = 5 },
@@ -142,7 +164,12 @@ public static class DbSeeder
                 Language = "English",
                 Budget = 4_000_000m
             },
-            Actors = [actors["Graham Chapman"], actors["John Cleese"], actors["Eric Idle"]],
+            MovieActors =
+            [
+                new MovieActor { Actor = actors["Graham Chapman"], Role = "Brian Cohen" },
+                new MovieActor { Actor = actors["John Cleese"], Role = "Reg" },
+                new MovieActor { Actor = actors["Eric Idle"], Role = "Mr. Cheeky" }
+            ],
             Reviews =
             [
                 new Review { ReviewerName = "Johan Lind", Comment = "Still one of the funniest films ever made.", Rating = 5 },
@@ -161,7 +188,11 @@ public static class DbSeeder
                 Language = "English",
                 Budget = 14_300_000m
             },
-            Actors = [actors["Michelle Yeoh"], actors["Ke Huy Quan"]],
+            MovieActors =
+            [
+                new MovieActor { Actor = actors["Michelle Yeoh"], Role = "Evelyn Wang" },
+                new MovieActor { Actor = actors["Ke Huy Quan"], Role = "Waymond Wang" }
+            ],
             Reviews =
             [
                 new Review { ReviewerName = "Sara Holm", Comment = "Crazy, emotional and completely original.", Rating = 5 }
@@ -179,7 +210,10 @@ public static class DbSeeder
                 Language = "English",
                 Budget = 170_000_000m
             },
-            Actors = [actors["Tom Cruise"]],
+            MovieActors =
+            [
+                new MovieActor { Actor = actors["Tom Cruise"], Role = "Pete Mitchell" }
+            ],
             Reviews = []   // movie without reviews – useful for testing empty lists
         }
     ];

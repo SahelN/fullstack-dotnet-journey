@@ -101,7 +101,7 @@ public class ActorsController : ControllerBase
     public async Task<IActionResult> AddActorToMovie(int movieId, int actorId)
     {
         var movie = await _context.Movies
-            .Include(m => m.Actors)
+            .Include(m => m.MovieActors)
             .FirstOrDefaultAsync(m => m.Id == movieId);
 
         if (movie is null)
@@ -116,12 +116,12 @@ public class ActorsController : ControllerBase
             return NotFound($"Actor with id {actorId} does not exist.");
         }
 
-        if (movie.Actors.Any(a => a.Id == actorId))
+        if (movie.MovieActors.Any(ma => ma.ActorId == actorId))
         {
             return Conflict($"Actor {actorId} is already in movie {movieId}.");
         }
 
-        movie.Actors.Add(actor);
+        movie.MovieActors.Add(new MovieActor { ActorId = actorId, Role = string.Empty });
         await _context.SaveChangesAsync();
 
         return NoContent();
